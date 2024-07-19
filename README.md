@@ -1,6 +1,7 @@
 # Read me please
-This folder contains codes designed to qaqc weather station data for the VIU hydromet network (https://qaqc-miniapp.shinyapps.io/qaqc_miniapp/). Note that each variable has a code associated with it that qaqcs the data (see this folder). The master code which contains all the qaqc functions necessary for the codes to work (i.e. qaqc_functions.py) is also in this folder. 
-All plots on the qaqc webpage contain a series of flag numbers in the hover box for each data, which are described below:
+This folder contains codes designed to qaqc weather station data for the VIU hydromet network (https://qaqc-miniapp.shinyapps.io/qaqc_miniapp/). Note that each variable has a code associated with it that qaqcs the data (see this folder). The master code which contains all the qaqc functions necessary for the codes to work ("qaqc_functions.py") is also in this folder. 
+
+Each qaqc codes import the "qaqc_stations_list.py", which is a python file containing the name of the clean databases which required qaqcing on the database. For each of these stations, there is a list of variables which will be qaqced everytime the codes are ran. If one wants to add or remove a variable or weather station to qaqc, they can simply add or remove the necessary elements in the "qaqc_stations_list.py". All data on the qaqc webpage and databases contain a series of flag numbers, which are described below.
 
 ## QAQC flags by variable:
 The order of the flags in the below tables reflects the order of each qaqc step in the code - this is why flag numbers are not increasing chronologically. However, an attempt was made to standardise the flag number for each step so that they can be recognised easily across variables (e.g. outlier removal #1 is always Flag #1). 
@@ -10,7 +11,7 @@ The order of the flags in the below tables reflects the order of each qaqc step 
 | 0.	No qaqc required |
 | 1.	Outlier removal #1 (between i and i-1): **25 cm** threshold |
 | 2.	Remove negative values  |
-| 3.	Remove duplicate consecutive values |
+| 3.	Remove any duplicate consecutive values over a window of **3** values |
 | 4.	Remove outliers based on mean and **4x standard deviation** over rolling window of **1 month** |
 | 6.	Set values to zero in summer season |
 | 7.	Outlier removal #2 (between i and i-1) – multiple thresholds: **20, 15, 10, 5 cm** |
@@ -22,6 +23,7 @@ The order of the flags in the below tables reflects the order of each qaqc step 
 | 1.	Outlier removal #1 (between i and i-1): **20 mm** threshold | 
 | 2.	Remove negative values | 
 | 3.	Reset timeseries to start at **0** at every new water year | 
+| 4.	Remove non-sensical values above **3000 mm** |
 | 6.	Set values to zero in summer season | 
 | 7.	Outlier removal #2 (between i and i-1) – multiple thresholds: **15, 10 mm** | 
 | 8.	Interpolation of NULL/NaN values for gaps smaller than or equal to **3 hours** | 
@@ -30,11 +32,12 @@ The order of the flags in the below tables reflects the order of each qaqc step 
 | ------------- |
 | 0.	No qaqc required | 
 | 1.	Outlier removal #1 (between i and i-1): **10 degrees C** threshold | 
-| 3.	Remove duplicate consecutive values | 
+| 2.	Remove non-sensical values above **50 degrees C** and below **-45 degrees C**|
+| 3.	Remove duplicate consecutive values **3** values | 
 | 4.	Remove outliers based on mean and **4x standard deviation** over rolling window of **1 month** | 
 | 6.	Convert value 0 to NULL/NaN when a value of **0** is bounded on either side by +/- **3 degrees C** (this filters out values where sensor was faulty and defaulted to 0 for no reason) | 
+| 7.	Remove outliers greater than **25 degrees C** from the mean over a rolling window of **2 weeks** | 
 | 8.	Interpolation of NULL/NaN values for gaps smaller than or equal to **3 hours** | 
-
 
 | PC Raw Pipe Flags: | 
 | ------------- |
@@ -53,15 +56,15 @@ The order of the flags in the below tables reflects the order of each qaqc step 
 | ------------- |
 | 0.	No qaqc required | 
 | 1.	Outlier removal #1 (between i and i-1): **85%** threshold | 
-| 2.	Remove values above **100%** or below **5%** | 
-| 3.	Remove duplicate consecutive values equal to **100% or 0%** for window size of **120 hours and 2 hours** respectively | 
+| 2.	Remove non-sensical values above **100%** or below **0.5%** | 
+| 3.	Remove duplicate consecutive values equal to **100% or 0.5%** for window size of **120 hours and 12 hours** respectively | 
 | 6.	Convert value 0 to NULL/NaN when a value of **0** is bounded on either side by +/- **75%** (this filters out values where sensor was faulty and defaulted to 0 for no reason) | 
 | 8.	Interpolation of NULL/NaN values for gaps smaller than or equal to **3 hours**. RH data is first converted to vapour pressure using the qaqced Air_Temp data | 
 
 | BP Flags: | 
 | ------------- |
 | 0.	No qaqc required | 
-| 2.	Remove values above **120kpa** or below **25kpa** | 
+| 2.	Remove non-sensical values above **120kpa** or below **25kpa** | 
 | 1.	Outlier removal #1 (between i and i-1): **4 kpa** threshold | 
 | 4.	Remove outliers based on mean and **4x standard deviation** over rolling window of **1 month** | 
 | 8.	Interpolation of NULL/NaN values for gaps smaller than or equal to **3 hours** | 
@@ -69,7 +72,7 @@ The order of the flags in the below tables reflects the order of each qaqc step 
 | PP_Tipper Flags: | 
 | ------------- |
 | 0.	No qaqc required | 
-| 1.	Outlier removal #1 (between i and i-1): **12mm** threshold | 
+| 1.	Outlier removal #1 (between i and i-1): **30mm** threshold | 
 | 2.	Remove negative values | 
 | 3.	Remove duplicate consecutive values equal to **0 mm** for window size of **1000 hours** | 
 | 8.	Interpolation of NULL/NaN values for gaps smaller than or equal to **3 hours** | 
@@ -81,30 +84,30 @@ The order of the flags in the below tables reflects the order of each qaqc step 
 | Wind_Dir Flags: | 
 | ------------- |
 | 0.	No qaqc required | 
-| 2.	Remove values above **360 degrees** or below **0 degrees** |
-| 3.	Remove duplicate consecutive values for window size of **5 hours** | 
+| 2.	Remove non-sensical values above **360 degrees** or below **0 degrees** |
+| 3.	Remove duplicate consecutive values for window size of **18 hours** | 
 
 | Pk_Wind_Dir Flags: | 
 | ------------- |
 | 0.	No qaqc required | 
-| 2.	Remove values above **360 degrees** or below **0 degrees** |
-| 3.	Remove duplicate consecutive values for window size of **5 hours** | 
+| 2.	Remove non-sensical values above **360 degrees** or below **0 degrees** |
+| 3.	Remove duplicate consecutive values for window size of **18 hours** | 
 
 | Wind_Speed Flags: | 
 | ------------- |
 | 0.	No qaqc required | 
-| 2.	Remove values above **120 degrees** or below **0 degrees** |
+| 2.	Remove non-sensical values above **120 km/h** or below **0 km/h** |
 | 3.	Remove duplicate consecutive values for window size of **50 hours** | 
 
 | Pk_Wind_Speed Flags: | 
 | ------------- |
 | 0.	No qaqc required | 
-| 2.	Remove values above **120 degrees** or below **0 degrees** |
+| 2.	Remove non-sensical values above **140 km/h** or below **0 km/h** |
 | 3.	Remove duplicate consecutive values for window size of **50 hours** | 
 
 ## QAQC known issues regarding offsets, issues with qaqc worklfow, or common issue with the data:
 
-Below are some examples where the qaqc process has either not worked well or there are offset in the data which have not been corrected for due to lack of clear understanding of the reason behind the offset. Decisions must be made as to what to do with these offsets, and then re-run the qaqc code on the offset-corrected data. Note that this list is by no means exhaustive. 
+Below are some examples where the qaqc process has either not worked well or there are offset in the data which have not been corrected for, due to lack of clear understanding of the reason behind the offset. Decisions must be made as to what to do with these offsets, and then re-run the qaqc code on the offset-corrected data. Note that this list is by no means exhaustive. 
 
 ### Snow Depth:
 1.	Cainridgerun:
@@ -153,9 +156,6 @@ Below are some examples where the qaqc process has either not worked well or the
 3.	Steph3:
 	+ a.	2016-17: 2017-12 peak is wrong?
 
-### PC Raw Pipe:
-None (yeah right)
-
 ### RH:
 1.	Rennell Pass:
 	+ a.	2012-2013: June 2012 to Feb 2013: Sensor failure? Data dips to below 80% for few months
@@ -169,23 +169,3 @@ None (yeah right)
 
 ### BP:
 1.	Homathko: Values are all around 35 kpa when they should likely be higher. Checked conversion from mv to hpa and tested the atmospheric correction but it doesn’t seem to be the answer? 
-
-
-### PP_Tipper:
-1.	Is the outlier removal threshold too harsh (12 mm)? Record atmospheric rivers in November 2021 (around 13-15th) was ~120mm/24hr in places near Vancouver/Abbotsford, equivalent to 5mm every hour for 24 hours. Accepting this fluctuates on an hourly basis, I doubled this value, but it appears to still be cutting off some data that may be accurate (e.g. Ape Lake 2017-18).
-
-### PC Tipper:
-None. Cumsum is recalculated from the qaqced PP_Tipper data. Flag number is set to 0 throughout since no qaqc is applied to the cumsum. Any differences observed between the "clean" and "qaqc" PC_Tipper data is from the qaqc applied to the PP_Tipper.
-
-### Wind_Dir:
-None. Minimal qaqc was applied (see tables above).
-
-### Pk_Wind_Dir:
-None. Minimal qaqc was applied (see tables above).
-
-### Wind_Speed:
-None. Minimal qaqc was applied (see tables above).
-
-### Pk_Wind_Speed:
-None. Minimal qaqc was applied (see tables above).
-

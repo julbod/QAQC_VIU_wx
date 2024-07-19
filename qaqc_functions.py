@@ -45,12 +45,12 @@ def static_range_multiple(data_all, data_subset, flag, steps):
                 flag_arr[idx] = flag         
     return data_all, flag_arr
 
-#%% Remove duplicate values
+#%% Remove duplicate values (only if there are 3x duplicate values)
 def duplicates(data_all, data_subset, flag):
     flag_arr = pd.Series(np.zeros((len(data_all))))
     
-    for i in range(len(data_subset)-1):
-        if abs(data_subset.iloc[i] - data_subset.iloc[i-1]) == 0:
+    for i in range(len(data_subset)-2):
+        if abs(data_subset.iloc[i+1] - data_subset.iloc[i]) == 0 and abs(data_subset.iloc[i+2] - data_subset.iloc[i+1]) == 0:
             idx = data_subset.index[i]
             data_all[idx] = np.nan
             flag_arr[idx] = flag        
@@ -129,7 +129,7 @@ def sdepth_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summ
     data_summer = data_all.iloc[np.arange(dt_summer_yr[0].item(),dt_summer_yr[1].item()+1)]
 
     # Read in the CSV containing specific summer dates for certain wx stations
-    with open('D:/GitHub/QAQC_wx_data/sdepth_zeroing_dates.csv', 'r') as readFile:
+    with open('sdepth_zeroing_dates.csv', 'r') as readFile:
         df_csv = pd.read_csv(readFile,low_memory=False)
         csv_dt = pd.to_datetime(df_csv['zero_date'])
         df_csv['zero_date'] = csv_dt.dt.year.values
@@ -198,7 +198,12 @@ def SWE_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summer_
     data_summer = data_all.iloc[np.arange(dt_summer_yr[0].item(),dt_summer_yr[1].item()+1)]
 
     # Read in the CSV containing specific summer dates for certain wx stations
-    with open('D:/GitHub/QAQC_wx_data/SWE_zeroing_dates.csv', 'r') as readFile:
+    # this is for stations or years where the breakpoint analysis does not work
+    # well. First run the code and assess if it detects the summer transition
+    # properly. If you see it doesn't, then enter manually the rough date by 
+    # eye-balling it and put it into the csv. If it's there, the code will pull
+    # it and set the summer at this date
+    with open('SWE_zeroing_dates.csv', 'r') as readFile:
         df_csv = pd.read_csv(readFile,low_memory=False)
         csv_dt = pd.to_datetime(df_csv['zero_date'])
         df_csv['zero_date'] = csv_dt.dt.year.values
@@ -210,13 +215,15 @@ def SWE_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summer_
     arbitrary_value = summer_threshold
     threshold = mean_value_summer > arbitrary_value # check whichever is >
     
-    # if there is specific date in the csv, then run below
+    # if there is specific date in the csv (i.e. where the automated summer 
+    # detection does not work properly), then run below
     name = pd.concat([pd.DataFrame([wx_stations_name],columns=['filename']), pd.DataFrame([year],columns=['zero_dates'])], axis=1, join='inner')
     if np.any((df_csv.values == name.values).all(axis=1)) == True:
         idx = int(np.flatnonzero((df_csv.values == name.values).all(axis=1)))
         idx_longest_sequence = int(np.flatnonzero((csv_dt[idx] == dt)))
 
-    # else if there is no specific dates in the csv, then run below
+    # else if there is no specific dates in the csv (i.e. where the below code
+    # works well), then run the below
     else:
         if threshold == True: # if mean is bigger, then use this as threshold
             data_bool = data_all.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)] < mean_value_summer
@@ -390,14 +397,20 @@ def interpolate_RH_qaqc(data_all_rh, data_subset_rh, data_subset_temp, flag, max
 
     return data_all_rh, flag_arr
 
-#%% merge individual arrays together and split by ',' if multiple integers in
-# one column
+#%% merge individual arrays together and split by ','. Make sure that if there
+# are multiple of the same flag onto one element (e.g. when an additional
+# pass at the filtering for one qaqc step results in two outliers being removed
+# with one flag number given that is the same for both steps (e.g. flag_1 = [1,1]
+# then keep only one of the flags))
 def merge_row(row):
     if all(element == 0 for element in row):
         return '0'
     else:
         non_zero_elements = [str(int(element)) for element in row if element != 0]
-        return ','.join(non_zero_elements)
+        if len(non_zero_elements) == 2 and non_zero_elements[0] == non_zero_elements[1]:
+            return non_zero_elements[0] # where multiple flags exists
+        else:
+            return ','.join(non_zero_elements) 
 
 #%% function to find nearest date
 def nearest(items, pivot):
@@ -424,9 +437,9 @@ def precip_drainage_fix(data_all, data_subset, flag, dt_yr, dt, wx_stations_name
     flag_arr = pd.Series(np.zeros((len(data_all))))
     
     # Read in the CSV containing specific summer dates for certain wx stations
-    with open('D:/GitHub/QAQC_wx_data/PrecipPipeRaw_drain.csv', 'r') as readFile:
+    with open('PrecipPipeRaw_drain.csv', 'r') as readFile:
         df_csv = pd.read_csv(readFile,low_memory=False)
-        csv_dt_pre = pd.to_datetime(df_csv['pre_drain'])
+        csv_dt_pre = pd.to_datetime(df_csv['pre_drain'], errors='coerce')
         csv_dt_post = pd.to_datetime(df_csv['post_drain'])
         df_csv['post_drain'] = csv_dt_post.dt.year.values
         pre_drain_dt = csv_dt_pre.values

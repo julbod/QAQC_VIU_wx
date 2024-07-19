@@ -8,6 +8,8 @@
 # Datetime and WatYr. If you don't do that, the qaqc_minapp won't work as it
 # relies on the same data types across 'clean' and 'qaqc' databases. This can be
 # done in python or directly in phpMyAdmin, using the following command:
+
+# for all stations except Stephanies (but include Steph3)    
 #ALTER TABLE `qaqc_apelake` CHANGE `Air_Temp` `Air_Temp` FLOAT NULL DEFAULT NULL, 
 #CHANGE `BP` `BP` FLOAT NULL DEFAULT NULL, CHANGE `Batt` `Batt` FLOAT NULL 
 #DEFAULT NULL, CHANGE `LWL` `LWL` FLOAT NULL DEFAULT NULL, CHANGE `LWU` `LWU` 
@@ -25,7 +27,19 @@
 #CHANGE `Wind_Dir` `Wind_Dir` FLOAT NULL DEFAULT NULL, CHANGE `Wind_Speed` 
 #`Wind_Speed` FLOAT NULL DEFAULT NULL;
 
-# Written by Julien Bodart (VIU) - 12/13/2023
+# for all stephanies (except Steph3)
+# ALTER TABLE `qaqc_steph1` CHANGE `Air_Temp` `Air_Temp` FLOAT NULL DEFAULT NULL, 
+# CHANGE `BP` `BP` FLOAT NULL DEFAULT NULL, CHANGE `Batt` `Batt` FLOAT NULL 
+# DEFAULT NULL, CHANGE `PC_Raw_Pipe` `PC_Raw_Pipe` FLOAT NULL DEFAULT NULL, CHANGE 
+# `PC_Tipper` `PC_Tipper` FLOAT NULL DEFAULT NULL, CHANGE `PP_Tipper` `PP_Tipper` FLOAT NULL DEFAULT NULL, 
+# CHANGE `Pk_Wind_Dir` `Pk_Wind_Dir` FLOAT NULL DEFAULT NULL, CHANGE `Pk_Wind_Speed`
+#  `Pk_Wind_Speed` FLOAT NULL DEFAULT NULL, CHANGE `RH` `RH` FLOAT NULL DEFAULT 
+# NULL, CHANGE `SWE` `SWE` FLOAT NULL DEFAULT NULL, CHANGE `Snow_Depth` 
+# `Snow_Depth` FLOAT NULL DEFAULT NULL, CHANGE `Solar_Rad` `Solar_Rad` FLOAT NULL DEFAULT NULL, 
+# CHANGE `Wind_Dir` `Wind_Dir` FLOAT NULL DEFAULT NULL, CHANGE `Wind_Speed` 
+# `Wind_Speed` FLOAT NULL DEFAULT NULL;
+
+# Written and updated by Julien Bodart (VIU) - 13.07.2024
 
 import pandas as pd 
 from sqlalchemy import create_engine
@@ -54,13 +68,13 @@ for i in range(len(wx_stations_lst)):
 # or because there is no snowDepth sensor there, and sort out the name formatting
 wx_stations = [x for x in wx_stations if "clean" in x ]
 wx_stations = [x for x in wx_stations if not "legacy_ontree" in x] # remove legacy data for Cairnridgerun
-wx_stations = [x for x in wx_stations if not "_test" in x] # remove legacy data for Cairnridgerun
-wx_stations = [x for x in wx_stations if not "placeglacier" in x] # remove machmell from list
-wx_stations = [x for x in wx_stations if not "clean_eastbuxton_archive" in x] # remove machmell from list
-wx_stations = [x for x in wx_stations if not "clean_steph10" in x] # remove legacy data for Cairnridgerun\wx_stations = [w.replace('clean_eastbuxton_archive', 'clean_temp') for w in wx_stations] # rename steph3 so it doesn't get cut out
-wx_stations = [w.replace('clean_machmellkliniklini', 'clean_Machmellkliniklini') for w in wx_stations] # rename machmellkliniklini so it doesn't get cut out
-wx_stations = [x for x in wx_stations if not "russell" in x] # remove russell from list
-wx_stations = [w.replace('clean_Machmellkliniklini', 'clean_machmellkliniklini') for w in wx_stations] # rename machmellkliniklini back to original
+wx_stations = [x for x in wx_stations if not "_test" in x] # remove test databases
+wx_stations = [x for x in wx_stations if not "placeglacier" in x] # remove place glacier from list
+wx_stations = [x for x in wx_stations if not "clean_eastbuxton_archive" in x] # remove archive from list
+wx_stations = [x for x in wx_stations if not "clean_steph10" in x] # remove steph10 Sergey
+wx_stations = [w.replace('clean_upperrussell', 'clean_Upper') for w in wx_stations] # rename upper russell so it doesn't get cut out
+wx_stations = [x for x in wx_stations if not "russell" in x] # remove russell main from list
+wx_stations = [w.replace('clean_Upper', 'clean_upperrussell') for w in wx_stations] # rename machmellkliniklini back to original
 
 # deal with Stephanies
 keep_steph = False
@@ -117,8 +131,17 @@ for l in range(len(wx_stations_name)):
     # otherwise if any other stations, then select Feb 2024 as latest date
     else:
         qaqc_upToDate = (datetime.now()- dtime.timedelta(days=7)).strftime("%Y-%m-%d %H") + ':00:00' # todays date rounded to nearest hour
-        new_df = sql_file[:sql_file.loc[sql_file['DateTime'] == qaqc_upToDate].iloc[0].name] # today's date - 7 days
-
+        
+        # try unless it throws error (which happens only if the transmission 
+        # has stopped between the last time this code ran and the qaqc_upToDate
+        # date (i.e. over the last week))
+        try:
+            new_df = sql_file[:sql_file.loc[sql_file['DateTime'] == qaqc_upToDate].iloc[0].name] # today's date - 7 days
+        except IndexError:
+            # if transmission has stopped since last week, skip this station
+            print('Careful: %s has stopped transmitting and will not be qaqced until back on live' %(sql_name))     
+            continue
+            
     nanout = [c for c in new_df.columns if c not in ['DateTime', 'WatYr']]
     new_df[nanout] = np.nan
     
@@ -147,13 +170,13 @@ for l in range(len(wx_stations_name)):
     # (new year starts on 10.01.YYYY). If months are 
     # before October, do nothing. Else add +1
     nan_idxs = df_full.loc[pd.isna(df_full['WatYr']), :].index
-    if wx_stations_name[l] == 'datlamen' or wx_stations_name[l] == 'rennellpass':
+    if nan_idxs.size:
         WatYrs = []
         for i in range(len(nan_idxs)):
-            if int(str(df_full['DateTime'].iloc[nan_idxs[-1]]).split('-')[1]) < 10:
-                WatYr = int(str(df_full['DateTime'].iloc[nan_idxs[-1]]).split('-')[0])
+            if int(str(df_full['DateTime'].iloc[nan_idxs[i]]).split('-')[1]) < 10:
+                WatYr = int(str(df_full['DateTime'].iloc[nan_idxs[i]]).split('-')[0])
             else:
-                WatYr = int(str(df_full['DateTime'].iloc[nan_idxs[-1]]).split('-')[0])+1
+                WatYr = int(str(df_full['DateTime'].iloc[nan_idxs[i]]).split('-')[0])+1
             WatYrs.append(WatYr) 
             
         df_full['WatYr'].iloc[nan_idxs] = WatYrs

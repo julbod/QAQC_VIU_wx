@@ -17,12 +17,16 @@ def get_metadata(engine):
     metadata.reflect(bind=engine)
     return metadata
 
-def update_records(engine, metadata, table_name, data, column_mapping):
+def update_records(engine, metadata, table_name, data, column_mapping, indices=None):
     # Reflect the table from the database
     table = Table(table_name, metadata, autoload_with=engine, autoload=True)
     
     # Update each record in the database
     with engine.connect() as connection:
+        # Filter the data based on provided indices if any
+        if indices is not None:
+            data = data.loc[indices]
+
         for index, row in data.iterrows():
             # Convert DateTime to string format (YYYY-MM-DD HH:MM:SS)
             datetime_str = row[column_mapping['DateTime']].strftime('%Y-%m-%d %H:%M:%S')
