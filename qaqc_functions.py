@@ -1,4 +1,4 @@
-#%% Repository of all functions associated with the qa/qc of all wx station
+#%% Repository of all functions associated with the qaqc of all wx station
 # data, irrespective of wx station or wx variable
 
 #%% Import functions
@@ -340,7 +340,7 @@ def mean_rolling_month_window(data_all, flag, dt_sql, sd):
       
     return data_all, flag_arr
 
-#%% Interpolate qaqced wx station data
+#%% Interpolate qaqced wx station data over specific length of time (max_hours)
 def interpolate_qaqc(data_all, data_subset, flag, max_hours):
     flag_arr = pd.Series(np.zeros((len(data_all))))
     mask = data_subset.isna()
