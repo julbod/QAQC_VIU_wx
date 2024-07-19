@@ -67,30 +67,30 @@ for i in range(len(wx_stations_lst)):
 # remove 'raw' tables, remove all steph (but steph3), and others due to local issues
 # or because there is no snowDepth sensor there, and sort out the name formatting
 wx_stations = [x for x in wx_stations if "clean" in x ]
-wx_stations = [x for x in wx_stations if not "legacy_ontree" in x] # remove legacy data for Cairnridgerun
+wx_stations = [x for x in wx_stations if not "legacy" in x] # remove legacy data for Cairnridgerun
 wx_stations = [x for x in wx_stations if not "_test" in x] # remove test databases
 wx_stations = [x for x in wx_stations if not "placeglacier" in x] # remove place glacier from list
-wx_stations = [x for x in wx_stations if not "clean_eastbuxton_archive" in x] # remove archive from list
-wx_stations = [x for x in wx_stations if not "clean_steph10" in x] # remove steph10 Sergey
-wx_stations = [w.replace('clean_upperrussell', 'clean_Upper') for w in wx_stations] # rename upper russell so it doesn't get cut out
-wx_stations = [x for x in wx_stations if not "russell" in x] # remove russell main from list
-wx_stations = [w.replace('clean_Upper', 'clean_upperrussell') for w in wx_stations] # rename machmellkliniklini back to original
+wx_stations = [x for x in wx_stations if not "archive" in x] # remove archive from list
 
-# deal with Stephanies
+# deal with Stephanies that are or are not connected to satellite live transmission
 keep_steph = False
 
-# if you don't want Stephs, then remove all except from Steph 3 and 6 which are satellite connected
+# if you don't want Stephanies that are not connected to satellite, then remove
+#  all except from Steph 3, 6 and Upper Russell
 if keep_steph == False:
     wx_stations = [w.replace('clean_steph3', 'clean_Stephanie3') for w in wx_stations] # rename steph3 so it doesn't get cut out
     wx_stations = [w.replace('clean_steph6', 'clean_Stephanie6') for w in wx_stations] # rename steph6 so it doesn't get cut out
+    wx_stations = [w.replace('clean_upperrussell', 'clean_Upper') for w in wx_stations] # rename upper russell so it doesn't get cut out
     wx_stations = [x for x in wx_stations if not "steph" in x] # remove all stephanies
+    wx_stations = [w.replace('clean_Upper', 'clean_upperrussell') for w in wx_stations] # rename machmellkliniklini back to original
     wx_stations = [w.replace('clean_Stephanie3', 'clean_steph3') for w in wx_stations] # rename steph3 back to original
     wx_stations = [w.replace('clean_Stephanie6', 'clean_steph6') for w in wx_stations] # rename steph6 back to original
+    wx_stations = [w.replace('clean_Upper', 'clean_upperrussell') for w in wx_stations] # rename machmellkliniklini back to original
     stephs = []
     
-# else if you want Stephanies, select specific ones 
+# else if you want Stephanies not connected to satellite, select specific ones 
 else:
-    stephs = ['steph1', 'steph2', 'steph4', 'steph6', 'steph7', 'steph8'] # string with all Stephanies except Steph3
+    stephs = ['steph1', 'steph2', 'steph4', 'steph7', 'steph8', 'russellmain'] # string with all Stephanies except Steph3, 6 and upper russell
 
 wx_stations_name = list(map(lambda st: str.replace(st, 'clean_', ''), wx_stations)) # remove 'clean_' for csv export
 wx_stations_name_cap = [wx_name.capitalize() for wx_name in wx_stations_name] # capitalise station name
@@ -101,8 +101,9 @@ for l in range(len(wx_stations_name)):
     sql_name = wx_stations_name_cap[l]
     print('###### Creating dummy sql database for station: %s ######' %(sql_name))     
     
-    #%% import current data on SQL database and clean name of some columns to match
-    # CSV column names
+    #%% import current data from "clean" and "qaqc" databases and make sure clean
+    # records have no gaps in the DateTime column (i.e. hourly records are 
+    # continuous every hour)
     sql_file = pd.read_sql(sql="SELECT * FROM clean_" + sql_database, con = engine)
     sql_file = sql_file.set_index('DateTime').asfreq('1H').reset_index() # make sure records are continuous every hour
     sql_file_qaqc = pd.read_sql(sql="SELECT * FROM qaqc_" + sql_database, con = engine)
@@ -128,7 +129,7 @@ for l in range(len(wx_stations_name)):
         end_yr_sql = qaqc_functions.nearest(dt_sql, datetime(2023, 2, 12, 11, 00, 00))
         new_df = sql_file.loc[:int(np.flatnonzero(sql_file['DateTime'] == end_yr_sql))]
         
-    # otherwise if any other stations, then select Feb 2024 as latest date
+    # otherwise if any other stations, then select last week as latest date
     else:
         qaqc_upToDate = (datetime.now()- dtime.timedelta(days=7)).strftime("%Y-%m-%d %H") + ':00:00' # todays date rounded to nearest hour
         
@@ -141,7 +142,8 @@ for l in range(len(wx_stations_name)):
             # if transmission has stopped since last week, skip this station
             print('Careful: %s has stopped transmitting and will not be qaqced until back on live' %(sql_name))     
             continue
-            
+    
+    # add nans if missing records        
     nanout = [c for c in new_df.columns if c not in ['DateTime', 'WatYr']]
     new_df[nanout] = np.nan
     
@@ -181,7 +183,10 @@ for l in range(len(wx_stations_name)):
             
         df_full['WatYr'].iloc[nan_idxs] = WatYrs
     
-    # import database to SQL
+    #%% import database to SQL
+    # to import an entirely new database with all historic data
     #df_full.to_sql(name='qaqc_%s' %wx_stations_name[l], con=engine, if_exists = 'append', index=False)
+    
+    # to import only last week of data
     df_full[sql_file_qaqc.index[-1]+1:].to_sql(name='qaqc_%s' %wx_stations_name[l], con=engine, if_exists = 'append', index=False)
 #%%
