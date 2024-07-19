@@ -5,7 +5,6 @@
 import pandas as pd 
 from datetime import datetime, timedelta
 import numpy as np
-import re
 import datetime as dtime
 from sqlalchemy import create_engine, MetaData, Table
 import os
@@ -37,8 +36,7 @@ for l in range(len(wx_stations_name)):
     sql_name = wx_stations_name_cap[l]
     print('###### Cleaning SWE data for station: %s ######' %(sql_name))     
     
-    #%% import current data on SQL database and clean name of some columns to match
-    # CSV column names
+    #%% import current data from "clean"
     sql_file = pd.read_sql(sql="SELECT * FROM clean_" + sql_database, con = engine)
     
     #%% time in rennell and datlamen is not rounded to nearest hour
@@ -86,6 +84,7 @@ for l in range(len(wx_stations_name)):
     else: 
         yr_range = np.arange(dt_sql[0].year, datetime.now().year) # find min and max years
         
+    # remove specific years which are un-qaqceable
     if wx_stations_name[l] == 'claytonfalls':
         delete = [np.flatnonzero(yr_range == 2014),np.flatnonzero(yr_range == 2016),np.flatnonzero(yr_range == 2018)]
         yr_range = np.delete(yr_range, delete)
@@ -233,7 +232,7 @@ for l in range(len(wx_stations_name)):
         qaqc_arr_final.append(qaqc_arr.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)])
 
     #%% push qaqced variable to SQL database
-    # as above, skip iteration if all air_temp is null
+    # as above, skip iteration if all SWE is null
     if sql_file[var].isnull().all() or dt_yr.size == 0:
         continue
     # otherwise, if data (most stations), keep running
