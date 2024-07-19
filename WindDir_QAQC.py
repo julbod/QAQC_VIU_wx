@@ -5,7 +5,6 @@
 import pandas as pd 
 from datetime import datetime, timedelta
 import numpy as np
-import re
 import datetime as dtime
 from sqlalchemy import create_engine, MetaData, Table
 import os
@@ -18,6 +17,8 @@ from qaqc_stations_list import *
 
 # remove chained assignmnent warning from Python - be careful!
 pd.set_option('mode.chained_assignment', None)
+
+#%% establish a connection with MySQL database 'viuhydro_wx_data_v2'
 engine = create_engine('mysql+mysqlconnector://viuhydro_shiny:.rt_BKD_SB*Q@192.99.62.147:3306/viuhydro_wx_data_v2', echo = False, pool_pre_ping=True, pool_recycle=3600)
 metadata = get_metadata(engine)
 

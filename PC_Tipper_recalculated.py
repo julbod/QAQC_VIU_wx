@@ -7,9 +7,7 @@
 
 # Written and modified by Julien Bodart (VIU) - 14.07.2024
 import pandas as pd 
-from datetime import datetime, timedelta
 import numpy as np
-import re
 import datetime as dtime
 from sqlalchemy import create_engine, MetaData, Table
 import os
