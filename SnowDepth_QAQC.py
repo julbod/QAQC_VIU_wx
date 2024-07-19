@@ -1,12 +1,10 @@
 # This code attempts to QA/QC the snow depth data in a full year for all wx
 # stations and all years
 
-
 # Written and modified by Julien Bodart (VIU) - 14.07.2024
 import pandas as pd 
 from datetime import datetime, timedelta
 import numpy as np
-import re
 import datetime as dtime
 from sqlalchemy import create_engine, MetaData, Table
 import os
@@ -32,7 +30,7 @@ wx_stations = [station for station, variables in wx_stations.items() if var in v
 wx_stations_name = list(map(lambda st: str.replace(st, 'clean_', ''), wx_stations)) # remove 'clean_' for csv export
 wx_stations_name_cap = [wx_name.capitalize() for wx_name in wx_stations_name] # capitalise station name
 
-#%% Loop over each station at a time and clean up the snow depth variable
+#%% Loop over each station at a time and clean up the snow_depth variable
 for l in range(len(wx_stations_name)): 
     sql_database = wx_stations_name[l]
     sql_name = wx_stations_name_cap[l]
@@ -231,7 +229,7 @@ for l in range(len(wx_stations_name)):
         qaqc_arr_final.append(qaqc_arr.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)])
 
     #%% push qaqced variable to SQL database
-    # as above, skip iteration if all air_temp is null
+    # as above, skip iteration if all snow_depth is null
     if sql_file[var].isnull().all() or dt_yr.size == 0:
         continue
     # otherwise, if data (most stations), keep running
