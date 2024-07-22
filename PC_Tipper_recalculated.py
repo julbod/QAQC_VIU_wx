@@ -11,7 +11,7 @@ import numpy as np
 import datetime as dtime
 from sqlalchemy import create_engine, MetaData, Table
 import os
-from datetime import *
+from datetime import datetime
 
 #%% import support functions
 os.chdir('D:/GitHub/QAQC_VIU_wx')
