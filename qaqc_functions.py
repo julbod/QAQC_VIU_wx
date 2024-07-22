@@ -117,6 +117,64 @@ def duplicates_window_WindDir(data_all, data_subset, flag, window):
             
     return data_all, flag_arr
 
+#%% Breakpoint analysis to detect summer trend and zero out values after that 
+# (e.g. Snow Depth). Works kind of well (e.g Upper Skeena), but still remains fidly
+# and needs more work to be efficient and not cut off important data before the break
+# =============================================================================
+# def SnowDepth_summer_zeroing(data_all, data_subset, threshold, dt_yr, dt_summer_yr, flag):
+#     flag_arr = pd.Series(np.zeros((len(data_all))))
+#     
+#     # find index in data of maximum gradient change
+#     slope_change_summer = np.gradient(data_subset)
+#     
+#     # Mask out values before June 1st
+#     june_idx = (dt_summer_yr[0] - 24 * 30) - data_subset.index[0]
+#     slope_change_summer[:june_idx[0]] = np.nan
+#     
+#     # Find indices where data_subset is within the threshold
+#     near_zero_indices = np.where(np.abs(data_subset.values) <= threshold)[0]
+#     
+#     # Find the maximum gradient change within the near-zero indices
+#     max_gradient_change_idx = -1
+#     max_gradient_change = np.nan
+#     
+#     for idx in near_zero_indices:
+#         if idx >= june_idx:
+#             if np.isnan(max_gradient_change) or slope_change_summer[idx] < max_gradient_change:
+#                 max_gradient_change = slope_change_summer[idx]
+#                 max_gradient_change_idx = idx
+#     
+#     # Ensure that the detected index is part of a sequence near zero
+#     sequence_length_threshold = 5  # Minimum length of sequence near zero
+#     
+#     if max_gradient_change_idx != -1:
+#         start_idx = max_gradient_change_idx
+#         end_idx = max_gradient_change_idx
+#     
+#         # Extend the sequence to the left
+#         while start_idx > 0 and np.abs(data_subset.values[start_idx - 1]) <= threshold:
+#             start_idx -= 1
+#     
+#         # Extend the sequence to the right
+#         while end_idx < len(data_subset) - 1 and np.abs(data_subset.values[end_idx + 1]) <= threshold:
+#             end_idx += 1
+#     
+#         # Check if the sequence length is above the threshold
+#         if end_idx - start_idx + 1 >= sequence_length_threshold:
+#             idx_summer_sequence = max_gradient_change_idx + data_subset.index[0]
+#         else:
+#             idx_summer_sequence = None
+#     else:
+#         idx_summer_sequence = None
+#         
+#     # store for plotting
+#     idxs = np.arange(idx_summer_sequence,dt_yr[1].item()+1)
+#     data_all[idxs] = 0
+#     flag_arr[idxs] = flag          
+# 
+#     return data_all, flag_arr
+# =============================================================================
+
 #%% Remove non-sensical non-zero values in summer for snow depth variable
 # Find all values below threshold, then find the longest consecutive 
 # list of these values (e.g. summer months) and replace them by 0
@@ -171,12 +229,14 @@ def sdepth_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summ
     return data_all, flag_arr
 
 #%% Breakpoint analysis to detect summer trend and zero out values after that (e.g. SWE)
+# works kind of but the other code works better
+# =============================================================================
 # def SWE_summer_zeroing(data_all, data_subset, dt_yr, dt_summer_yr, flag):
 #     flag_arr = pd.Series(np.zeros((len(data_all))))
-    
+#     
 #     # find index in data of maximum gradient change
 #     slope_change_summer = np.gradient(data_subset)
-    
+#     
 #     # find index of longest sequence, making sure you're not picking up
 #     # a longer sequence at the start of the timeseries (e.g. in early winter)
 #     # hence the "data_bool.iloc[0:round(len(data_subset)/2)]"
@@ -185,13 +245,14 @@ def sdepth_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summ
 #     june_idx = (dt_summer_yr[0]-24*30) - data_subset.index[0] # index for 06-01 in slope_change_summer
 #     slope_change_summer[np.arange(0,june_idx)] = np.nan # all values before are nan
 #     idx_summer_sequence = np.nanargmin(slope_change_summer) + data_subset.index[0]  # index for summer sequence in data array
-    
+#     
 #     # store for plotting
 #     idxs = np.arange(idx_summer_sequence,dt_yr[1].item()+1)
 #     data_all[idxs] = 0
 #     flag_arr[idxs] = flag          
-
+# 
 #     return data_all, flag_arr
+# =============================================================================
 
 def SWE_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summer_threshold, dt, wx_stations_name, year):
     flag_arr = pd.Series(np.zeros((len(data_all))))
