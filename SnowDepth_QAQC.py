@@ -83,6 +83,14 @@ for l in range(len(wx_stations_name)):
         yr_range = np.arange(dt_sql[0].year, datetime.now().year+1) # find min and max years
     else: 
         yr_range = np.arange(dt_sql[0].year, datetime.now().year) # find min and max years
+        
+    # remove specific years for specific stations where data is unqaqcable
+    if wx_stations_name[l] == 'mountcayley':
+        yr_range = np.delete(yr_range, np.flatnonzero(yr_range == 2022))
+        
+    # remove 2024 year for East Buxton as it's un-qaqcable
+    if wx_stations_name[l] == 'eastbuxton':
+        yr_range = np.delete(yr_range, np.flatnonzero(yr_range == 2023))
 
     qaqc_arr_final = [] # set up the variable
     
@@ -140,19 +148,11 @@ for l in range(len(wx_stations_name)):
         # small offsets throughout the time series (usually these are only for
         # current water years. Previous water years will already have been fixed
         # in the databases before running the code)       
-        # remove specific years for specific stations where data is unqaqcable
-        if wx_stations_name[l] == 'mountcayley' and yr_range[k] == 2023:
-            qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)] = np.nan # remove entire year due to issue with sensor
-            
-        # remove 2024 year for East Buxton as it's un-qaqcable
-        if wx_stations_name[l] == 'eastbuxton' and yr_range[k] == 2023:
-            qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)] = np.nan # remove entire year due to issue with sensor
-        
         if wx_stations_name[l] == 'mountcayley' and yr_range[k]+1 >= 2024:
             idx_last = int(np.flatnonzero(qaqc_arr['DateTime'] == '2023-10-31 15:00:00')[0])
             if idx_last in qaqc_arr.index:
-                qaqc_arr[var].iloc[dt_yr[0].item():int(np.flatnonzero(qaqc_arr.index == idx_last))] = qaqc_arr[var].iloc[dt_yr[0].item():int(np.flatnonzero(qaqc_arr.index == idx_last)[0])] - 626.4
-                qaqc_arr[var].iloc[int(np.flatnonzero(qaqc_arr.index == idx_last)):dt_yr[1].item()] =  qaqc_arr[var].iloc[int(np.flatnonzero(qaqc_arr.index == idx_last)[0]):dt_yr[1].item()]+9 # add 9 as offset eyeballed
+                qaqc_arr[var].iloc[dt_yr[0].item():int(np.flatnonzero(qaqc_arr.index == idx_last)[0])] = qaqc_arr[var].iloc[dt_yr[0].item():int(np.flatnonzero(qaqc_arr.index == idx_last)[0])] - 626.4
+                qaqc_arr[var].iloc[int(np.flatnonzero(qaqc_arr.index == idx_last)[0]):dt_yr[1].item()] = qaqc_arr[var].iloc[int(np.flatnonzero(qaqc_arr.index == idx_last)[0]):dt_yr[1].item()]+9 # add 9 as offset eyeballed
         
         if wx_stations_name[l] == 'apelake' and yr_range[k]+1 >= 2024:
             qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)] = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]-10.65 # add 10.65 as offset eyeballed
