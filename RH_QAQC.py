@@ -144,10 +144,10 @@ for l in range(len(wx_stations_name)):
         qaqc_2, flags_2a = qaqc_functions.reset_max_threshold(qaqc_arr[var], data, flag, threshold)
         qaqc_arr[var] = qaqc_2
         
-        # below 0.5% (for all non-satellite connected Stephs, this should be set to 1.5)
+        # below 0.5% (for all non-satellite connected Stephs, this should be set to 2.5)
         data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
         flag = 2
-        threshold = 0.5 # in %  for all non-satellite connected Stephs, this should be set to 1.5)
+        threshold = 0.5 # in %  for all non-satellite connected Stephs, this should be set to 2.5)
         qaqc_2, flags_2b = qaqc_functions.reset_min_threshold(qaqc_arr[var], data, flag, threshold)
         qaqc_arr[var] = qaqc_2
         
