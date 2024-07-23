@@ -34,12 +34,12 @@ clean_upperskeena = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_P
 
 #%% not yet in the qaqc pipeline (Stephs are not connected to live transmission
 # and place glacier has just been installed and is still in its trial phase)
-# clean_steph1 = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
-# clean_steph2 = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
-# clean_steph4 = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
-# clean_steph7 = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
-# clean_steph8 = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
-# clean_russellmain = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
+# clean_steph1 = ['Air_Temp', 'RH', 'PP_Tipper', 'PC_Tipper', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Snow_Depth']
+# clean_steph2 = ['Air_Temp', 'RH', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Snow_Depth']
+# clean_steph4 = ['Air_Temp', 'RH', 'PP_Tipper', 'PC_Tipper', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Snow_Depth']
+# clean_steph7 = ['Air_Temp', 'RH', 'PP_Tipper', 'PC_Tipper', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Snow_Depth']
+# clean_steph8 = ['Air_Temp', 'RH', 'PP_Tipper', 'PC_Tipper', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Snow_Depth']
+# clean_russellmain = ['Air_Temp', 'RH', 'PP_Tipper', 'PC_Tipper', 'Pk_Wind_Speed']
 # clean_placeglacier = ['Air_Temp', 'RH', 'BP', 'PP_Tipper', 'PC_Tipper', 'PC_Raw_Pipe', 'Wind_Speed', 'Wind_Dir', 'Pk_Wind_Speed', 'Pk_Wind_Dir', 'Snow_Depth', 'SWE']
 
 #%%
