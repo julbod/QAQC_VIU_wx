@@ -524,7 +524,7 @@ def precip_drainage_fix(data_all, data_subset, flag, dt_yr, dt, wx_stations_name
         
         # if there is no pre jump date in csv (e.g. because the jump is at i-1)
         if pd.isnull(idxs_dt_pre[i]):
-            ts_idx_post = int(np.flatnonzero((idxs_dt_post[i] == dt))) # index in timeseries
+            ts_idx_post = int(np.flatnonzero(idxs_dt_post[i] == dt)[0]) if np.any(idxs_dt_post[i] == dt) else None
             jump_val = corrected_data.loc[ts_idx_post-1] - corrected_data.loc[ts_idx_post]
             corrected_data.loc[ts_idx_post:] = corrected_data.loc[ts_idx_post:] + jump_val
             flags.loc[ts_idx_post:] = flag
@@ -532,8 +532,8 @@ def precip_drainage_fix(data_all, data_subset, flag, dt_yr, dt, wx_stations_name
        # if there is no pre jump date in csv (e.g. because the jump is earlier
        # than i-1 and there are nans in between)
         else:
-            ts_idx_pre = int(np.flatnonzero((idxs_dt_pre[i] == dt))) # index in timeseries
-            ts_idx_post = int(np.flatnonzero((idxs_dt_post[i] == dt))) # index in timeseries
+            ts_idx_pre = int(np.flatnonzero(idxs_dt_pre[i] == dt)[0]) if np.any(idxs_dt_pre[i] == dt) else None
+            ts_idx_post = int(np.flatnonzero(idxs_dt_post[i] == dt)[0]) if np.any(idxs_dt_post[i] == dt) else None
             jump_val = corrected_data.loc[ts_idx_pre] - corrected_data.loc[ts_idx_post]
             corrected_data.loc[ts_idx_post:] = corrected_data.loc[ts_idx_post:] + jump_val
             flags.loc[ts_idx_post:] = flag
