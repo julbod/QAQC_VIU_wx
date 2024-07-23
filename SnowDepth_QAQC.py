@@ -227,7 +227,7 @@ for l in range(len(wx_stations_name)):
         flag = 6
        
         # for all water years except current one
-        if yr_range[k] == 2023 and wx_stations_name[l] == 'mountmaya': # Maya came offline before summer started
+        if yr_range[k] == 2023 and wx_stations_name[l] == 'mountmaya' or summer == False: # Maya came offline before summer started
             flags_6 = pd.Series(np.zeros((len(qaqc_arr))))        
         elif summer == True:  
             summer_threshold = 12
