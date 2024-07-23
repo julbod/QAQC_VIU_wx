@@ -280,8 +280,8 @@ def SWE_summer_zeroing(data_all, data_subset, flag, dt_yr, dt_summer_yr, summer_
     # detection does not work properly), then run below
     name = pd.concat([pd.DataFrame([wx_stations_name],columns=['filename']), pd.DataFrame([year],columns=['zero_dates'])], axis=1, join='inner')
     if np.any((df_csv.values == name.values).all(axis=1)) == True:
-        idx = int(np.flatnonzero((df_csv.values == name.values).all(axis=1)))
-        idx_longest_sequence = int(np.flatnonzero((csv_dt[idx] == dt)))
+        idx = np.where(df_csv.values == name.values)[0][0]
+        idx_longest_sequence = np.where(csv_dt[idx] == dt)[0][0]
 
     # else if there is no specific dates in the csv (i.e. where the below code
     # works well), then run the below
