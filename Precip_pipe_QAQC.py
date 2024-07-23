@@ -102,7 +102,7 @@ for l in range(len(wx_stations_name)):
         yr_range = np.delete(yr_range, np.flatnonzero(yr_range == 2013)) 
         
     if wx_stations_name[l] == 'eastbuxton':
-        yr_range = np.delete(yr_range, np.flatnonzero(yr_range == 2014))   
+        yr_range = np.delete(yr_range, np.flatnonzero(yr_range == 2014))
           
     qaqc_arr_final = [] # set up the variable
     
