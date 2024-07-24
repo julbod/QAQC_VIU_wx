@@ -195,7 +195,13 @@ for l in range(len(wx_stations_name)):
             idx_nans_str = int(np.flatnonzero(qaqc_arr['DateTime'] == '2018-10-08 18:00:00')[0])
             idx_nans_end = int(np.flatnonzero(qaqc_arr['DateTime'] == '2018-10-16 15:00:00')[0])
             qaqc_arr[var].iloc[idx_nans_str:idx_nans_end] = np.nan # remove weird values for specific time period in 2019-20
-                                
+          
+        if wx_stations_name[l] == 'mountmaya' and yr_range[k]+1 == 2024:
+            idx_nans_str = int(np.flatnonzero(qaqc_arr['DateTime'] == '2024-05-01 22:00:00')[0])
+            idx_nans_end = int(np.flatnonzero(qaqc_arr['DateTime'] == '2024-05-04 14:00:00')[0])
+            qaqc_arr[var].iloc[idx_nans_str:idx_nans_end] = np.nan # remove weird values for specific time period in 2019-20
+                         
+                      
         #%% Apply static range test (remove values where difference is > than value)
         data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
         flag = 1
