@@ -59,7 +59,7 @@ for l in range(len(wx_stations_name)):
     #%% make sure you only go as far as specific date for all wx stations for current water year
     # Mt Maya went offline in Nov 2024
     if wx_stations_name[l] == 'mountmaya':
-        sql_file_idx_latest = int(np.flatnonzero(sql_file['DateTime'] == '2024-01-11 07:00:00')[0]) if np.flatnonzero(sql_file['DateTime'] == '2024-01-11 07:00:00').size > 0 else 0   # today's date - 7 days
+        sql_file_idx_latest = int(np.flatnonzero(sql_file['DateTime'] == '2024-07-01 00:00:00')[0]) if np.flatnonzero(sql_file['DateTime'] == '2024-07-01 00:00:00').size > 0 else 0   # today's date - 7 days
         sql_file = sql_file[:sql_file_idx_latest+1]
     # Machmell went offline in Feb 2023
     elif wx_stations_name[l] == 'machmell':

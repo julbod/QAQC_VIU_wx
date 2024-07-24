@@ -117,17 +117,17 @@ for l in range(len(wx_stations_name)):
     # Stephs not connected to satellite have data up to Oct 2023
     if wx_stations_name[l] in stephs: 
         end_yr_sql = qaqc_functions.nearest(dt_sql, datetime(2023, 9, 30, 23, 00, 00))
-        new_df = sql_file.loc[:int(np.flatnonzero(sql_file['DateTime'] == end_yr_sql))]
+        new_df = sql_file.loc[:np.where(sql_file['DateTime'] == end_yr_sql)[0][0]]
         
     # Mt Maya went offline in Nov 2024
     elif wx_stations_name[l] == 'mountmaya':
-        end_yr_sql = qaqc_functions.nearest(dt_sql, datetime(2024, 1, 11, 7, 0, 0))
-        new_df = sql_file.loc[:int(np.flatnonzero(sql_file['DateTime'] == end_yr_sql))]
+        end_yr_sql = qaqc_functions.nearest(dt_sql, datetime(2024, 7, 1, 0, 0, 0))
+        new_df = sql_file.loc[:np.where(sql_file['DateTime'] == end_yr_sql)[0][0]]
 
     # Machmell went offline in Feb 2023
     elif wx_stations_name[l] == 'machmell':
         end_yr_sql = qaqc_functions.nearest(dt_sql, datetime(2023, 2, 12, 11, 00, 00))
-        new_df = sql_file.loc[:int(np.flatnonzero(sql_file['DateTime'] == end_yr_sql))]
+        new_df = sql_file.loc[:np.where(sql_file['DateTime'] == end_yr_sql)[0][0]]
         
     # otherwise if any other stations, then select last week as latest date
     else:
