@@ -47,8 +47,10 @@ import numpy as np
 import re
 from datetime import datetime
 import datetime as dtime
+import os
 
 #%% import support functions
+os.chdir('D:/GitHub/QAQC_VIU_wx')
 import qaqc_functions
 
 #%% Establish a connection with MySQL database 'viuhydro_wx_data_v2'
@@ -69,7 +71,6 @@ for i in range(len(wx_stations_lst)):
 wx_stations = [x for x in wx_stations if "clean" in x ]
 wx_stations = [x for x in wx_stations if not "legacy" in x] # remove legacy data for Cairnridgerun
 wx_stations = [x for x in wx_stations if not "_test" in x] # remove test databases
-wx_stations = [x for x in wx_stations if not "placeglacier" in x] # remove place glacier from list
 wx_stations = [x for x in wx_stations if not "archive" in x] # remove archive from list
 
 # deal with Stephanies that are or are not connected to satellite live transmission
@@ -110,8 +111,6 @@ for l in range(len(wx_stations_name)):
 
     #%% Only select earliest possible date for full year
     dt_sql = pd.to_datetime(sql_file['DateTime'])    
-    yr_str = dt_sql[0].year # index of year 1
-    dt_str = np.flatnonzero(dt_sql >= np.datetime64(datetime(yr_str, 10, 1, 00, 00, 00)))[0] # index of full water year for start of timeseries
     
     #%% only keep data from oldest to newest default date except for exceptions  
     # Stephs not connected to satellite have data up to Oct 2023
