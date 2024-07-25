@@ -98,7 +98,7 @@ for l in range(len(wx_stations_name)):
     
     # start the qaqc process for each water year at specific weather station
     # only run for last water year to save memory on server
-    for k in range(len(yr_range)):
+    for k in range(len(yr_range)-1,len(yr_range)):
         print('## Cleaning data for year: %d-%d ##' %(yr_range[k],yr_range[k]+1)) 
     
         # find indices of water years
