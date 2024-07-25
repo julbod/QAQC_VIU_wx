@@ -68,6 +68,8 @@ for l in range(len(wx_stations_name)):
         yr_range = np.arange(dt_sql[0].year, datetime.now().year+1) # find min and max years
     elif wx_stations_name[l] == 'machmell': 
         yr_range = np.arange(dt_sql[0].year, datetime.now().year-1) # find min and max years
+    elif wx_stations_name[l] == 'placeglacier' and dt_sql[0].year == datetime.now().year: 
+        yr_range = np.arange(2023, datetime.now().year) # specify this for placeglacier's first year
     else: 
         yr_range = np.arange(dt_sql[0].year, datetime.now().year) # find min and max years
         

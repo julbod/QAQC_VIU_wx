@@ -71,6 +71,8 @@ for l in range(len(wx_stations_name)):
     # get your indices for each water year
     if 10 <= datetime.now().month and datetime.now().month <= 12:
         yr_range = np.arange(dt_sql[0].year, datetime.now().year+1) # find min and max years
+    elif wx_stations_name[l] == 'placeglacier' and dt_sql[0].year == datetime.now().year: 
+        yr_range = np.arange(2023, datetime.now().year) # specify this for placeglacier's first year
     else: 
         yr_range = np.arange(dt_sql[0].year, datetime.now().year) # find min and max years
         
@@ -190,92 +192,104 @@ for l in range(len(wx_stations_name)):
             idx_nans_str = int(np.flatnonzero(qaqc_arr['DateTime'] == '2024-05-01 22:00:00')[0])
             idx_nans_end = int(np.flatnonzero(qaqc_arr['DateTime'] == '2024-05-04 14:00:00')[0])
             qaqc_arr[var].iloc[idx_nans_str:idx_nans_end] = np.nan # remove weird values for specific time period in 2019-20
-                         
-                      
-        #%% Apply static range test (remove values where difference is > than value)
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 1
-        step_size = 25 # in cm
-        qaqc_1, flags_1 = qaqc_functions.static_range_test(qaqc_arr[var], data, flag, step_size)
-        qaqc_arr[var] = qaqc_1
         
-        #%% Remove all negative values (non-sensical)
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 2
-        qaqc_2, flags_2 = qaqc_functions.negtozero(qaqc_arr[var], data, flag)
-        qaqc_arr[var] = qaqc_2
-    
-        #%% Remove duplicate consecutive values
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 3
-        qaqc_3, flags_3 = qaqc_functions.duplicates(qaqc_arr[var], data, flag)
-        qaqc_arr[var] = qaqc_3
-
-        #%% Remove outliers based on mean and std using a rolling window for each
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 4
-        st_dev = 4 # specify how many times you want to multiple st_dev (good starting point is 3; 1 is too harsh) 
-        qaqc_4, flags_4 = qaqc_functions.mean_rolling_month_window(qaqc_arr[var], flag, dt_sql, st_dev)
-        qaqc_arr[var] = qaqc_4
-               
-        #%% Remove non-sensical non-zero values in summer for Snow Depth
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 6
-       
-        # for all water years except current one
-        # if yr_range[k] == 2023 and wx_stations_name[l] == 'mountmaya' or summer == False: # Maya came offline before summer started
-        if summer == False: 
-            flags_6 = pd.Series(np.zeros((len(qaqc_arr))))        
-        elif summer == True:  
-            summer_threshold = 12
-            qaqc_6, flags_6 = qaqc_functions.sdepth_summer_zeroing(qaqc_arr[var], data, flag, dt_yr, dt_summer_yr, summer_threshold, qaqc_arr['DateTime'], wx_stations_name[l], yr_range[k]+1)
-            qaqc_arr[var] = qaqc_6
+        #%% qaqc all data except if it is placeglacier, as the snow_depth is still
+        # not yet calibrated (for water year 2024)    
+        # for place glacier, assign nans to all summer values and flag 6             
+        if wx_stations_name[l] == 'placeglacier' and yr_range[k] == 2023:
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flags = pd.Series(np.full((len(qaqc_arr[var])),6)) # assign flag 6
+            data[:] = np.nan # fill with nans
+            qaqc_arr[var] = data
+            qaqc_arr[var_flags] = flags
+            qaqc_arr_final.append(qaqc_arr.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)])
             
-        #%% one more pass to correct remaining outliers using the step size
-        # and different levels until it's all 'shaved off'
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 7
-        step_sizes = [20,15,10,5] # in cm
-        qaqc_7, flags_7 = qaqc_functions.static_range_multiple(qaqc_arr[var], data, flag, step_sizes)
-        qaqc_arr[var] = qaqc_7
+        # else for all other weather stations that are not place glacier
+        else:
+            #%% Apply static range test (remove values where difference is > than value)
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 1
+            step_size = 25 # in cm
+            qaqc_1, flags_1 = qaqc_functions.static_range_test(qaqc_arr[var], data, flag, step_size)
+            qaqc_arr[var] = qaqc_1
+            
+            #%% Remove all negative values (non-sensical)
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 2
+            qaqc_2, flags_2 = qaqc_functions.negtozero(qaqc_arr[var], data, flag)
+            qaqc_arr[var] = qaqc_2
         
-        #%% Interpolate nans with method='linear' using pandas.DataFrame.interpolate
-        # First, identify gaps larger than 3 hours (which should not be interpolated)
-        data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
-        flag = 8
-        max_hours = 3
-        qaqc_8, flags_8 = qaqc_functions.interpolate_qaqc(qaqc_arr[var], data, flag, max_hours)
-        qaqc_arr[var] = qaqc_8
-        
-        #%% plot
-        # fig, ax = plt.subplots()
-        # plt.axhline(y=0, color='k', linestyle='-', linewidth=0.5) # plot horizontal line at 0
-
-        # ax.plot(sql_file['DateTime'].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)],raw, '#1f77b4', linewidth=1) # blue
-        # ax.plot(sql_file['DateTime'].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)],qaqc_8.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)], '#d62728', linewidth=1)
-        # ax.plot(sql_file['DateTime'].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)],qaqc_7.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)], '#ff7f0e', linewidth=1)
-        
-        #%% merge flags together into large array, with comma separating multiple
-        # flags for each row if these exist
-        flags = pd.concat([flags_1,flags_2,flags_3,flags_4,flags_6,flags_7,flags_8],axis=1)
-        qaqc_arr['Snow_Depth_flags'] = flags.apply(qaqc_functions.merge_row, axis=1)
-        
-        # for simplicity, if flag contains flag 6 amongst other flags in one row,
-        # then only keep 6 as all other flags don't matter if it's already been
-        # zeroed out (i.e. flag 6 is the dominant flag)
-        idx_flags6 = [i for i, s in enumerate(qaqc_arr['Snow_Depth_flags']) if '6' in s]
-        qaqc_arr['Snow_Depth_flags'].iloc[idx_flags6] = '6'
-
-        #%% exceptions below for specific manual fixes to the data
-        if wx_stations_name[l] == 'cainridgerun' and yr_range[k] == 2019:
-            idx_err = int(np.flatnonzero(qaqc_arr['DateTime'] == '2020-02-21 03:00:00')[0])
-            qaqc_arr[var].iloc[idx_err:dt_yr[1].item()+1] = np.nan
-            qaqc_7.iloc[idx_err:dt_yr[1].item()+1] = np.nan
-            qaqc_8.iloc[idx_err:dt_yr[1].item()+1] = np.nan
-            qaqc_arr[var_flags].iloc[idx_err:dt_yr[1].item()+1] = 1
-        
-        #%% append to qaqc_arr_final after every k iteration
-        qaqc_arr_final.append(qaqc_arr.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)])
+            #%% Remove duplicate consecutive values
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 3
+            qaqc_3, flags_3 = qaqc_functions.duplicates(qaqc_arr[var], data, flag)
+            qaqc_arr[var] = qaqc_3
+    
+            #%% Remove outliers based on mean and std using a rolling window for each
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 4
+            st_dev = 4 # specify how many times you want to multiple st_dev (good starting point is 3; 1 is too harsh) 
+            qaqc_4, flags_4 = qaqc_functions.mean_rolling_month_window(qaqc_arr[var], flag, dt_sql, st_dev)
+            qaqc_arr[var] = qaqc_4
+                   
+            #%% Remove non-sensical non-zero values in summer for Snow Depth
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 6
+           
+            # for all water years except current one
+            # if yr_range[k] == 2023 and wx_stations_name[l] == 'mountmaya' or summer == False: # Maya came offline before summer started
+            if summer == False: 
+                flags_6 = pd.Series(np.zeros((len(qaqc_arr))))        
+            elif summer == True:  
+                summer_threshold = 12
+                qaqc_6, flags_6 = qaqc_functions.sdepth_summer_zeroing(qaqc_arr[var], data, flag, dt_yr, dt_summer_yr, summer_threshold, qaqc_arr['DateTime'], wx_stations_name[l], yr_range[k]+1)
+                qaqc_arr[var] = qaqc_6
+                
+            #%% one more pass to correct remaining outliers using the step size
+            # and different levels until it's all 'shaved off'
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 7
+            step_sizes = [20,15,10,5] # in cm
+            qaqc_7, flags_7 = qaqc_functions.static_range_multiple(qaqc_arr[var], data, flag, step_sizes)
+            qaqc_arr[var] = qaqc_7
+            
+            #%% Interpolate nans with method='linear' using pandas.DataFrame.interpolate
+            # First, identify gaps larger than 3 hours (which should not be interpolated)
+            data = qaqc_arr[var].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)]
+            flag = 8
+            max_hours = 3
+            qaqc_8, flags_8 = qaqc_functions.interpolate_qaqc(qaqc_arr[var], data, flag, max_hours)
+            qaqc_arr[var] = qaqc_8
+            
+            #%% plot
+            # fig, ax = plt.subplots()
+            # plt.axhline(y=0, color='k', linestyle='-', linewidth=0.5) # plot horizontal line at 0
+    
+            # ax.plot(sql_file['DateTime'].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)],raw, '#1f77b4', linewidth=1) # blue
+            # ax.plot(sql_file['DateTime'].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)],qaqc_8.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)], '#d62728', linewidth=1)
+            # ax.plot(sql_file['DateTime'].iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)],qaqc_7.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)], '#ff7f0e', linewidth=1)
+            
+            #%% merge flags together into large array, with comma separating multiple
+            # flags for each row if these exist
+            flags = pd.concat([flags_1,flags_2,flags_3,flags_4,flags_6,flags_7,flags_8],axis=1)
+            qaqc_arr['Snow_Depth_flags'] = flags.apply(qaqc_functions.merge_row, axis=1)
+            
+            # for simplicity, if flag contains flag 6 amongst other flags in one row,
+            # then only keep 6 as all other flags don't matter if it's already been
+            # zeroed out (i.e. flag 6 is the dominant flag)
+            idx_flags6 = [i for i, s in enumerate(qaqc_arr['Snow_Depth_flags']) if '6' in s]
+            qaqc_arr['Snow_Depth_flags'].iloc[idx_flags6] = '6'
+    
+            #%% exceptions below for specific manual fixes to the data
+            if wx_stations_name[l] == 'cainridgerun' and yr_range[k] == 2019:
+                idx_err = int(np.flatnonzero(qaqc_arr['DateTime'] == '2020-02-21 03:00:00')[0])
+                qaqc_arr[var].iloc[idx_err:dt_yr[1].item()+1] = np.nan
+                qaqc_7.iloc[idx_err:dt_yr[1].item()+1] = np.nan
+                qaqc_8.iloc[idx_err:dt_yr[1].item()+1] = np.nan
+                qaqc_arr[var_flags].iloc[idx_err:dt_yr[1].item()+1] = 1
+            
+            #%% append to qaqc_arr_final after every k iteration
+            qaqc_arr_final.append(qaqc_arr.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)])
 
     #%% push qaqced variable to SQL database
     # as above, skip iteration if all snow_depth is null
