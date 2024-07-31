@@ -218,13 +218,13 @@ for l in range(len(wx_stations_name)):
             # then only keep 6 as all other flags don't matter if it's already been
             # zeroed out (i.e. flag 6 is the dominant flag)
             idx_flags6 = [i for i, s in enumerate(qaqc_arr['SWE_flags']) if '6' in s]
-            qaqc_arr['SWE_flags'].iloc[idx_flags6] = '6'
+            qaqc_arr.loc[idx_flags6, 'SWE_flags'] = '6'
             
             # if flag is both [8,7], it means the data was interpolated but the gap
             # between i and i-1 is greater than the step size required so you want
             # to remove the interpolated value and place nans (and thus only keep 7)
             idx_flags89 = [i for i, s in enumerate(qaqc_arr['SWE_flags']) if '8,9' in s]
-            qaqc_arr[var_flags].iloc[idx_flags89] = '9'     
+            qaqc_arr.loc[idx_flags89, var_flags] = '9'     
     
             #%% append to qaqc_arr_final after every k iteration
             qaqc_arr_final.append(qaqc_arr.iloc[np.arange(dt_yr[0].item(),dt_yr[1].item()+1)])
